@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"flag"
@@ -15,7 +16,7 @@ import (
 )
 
 const (
-	CONFIG_DIR_NAME = "gen"
+	CONFIG_DIR_NAME  = "gen"
 	CONFIG_FILE_NAME = "setting.json"
 )
 
@@ -53,6 +54,10 @@ func main() {
 			log.Fatal("file read error", err)
 		}
 		text = string(b)
+	} else {
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		text = scanner.Text()
 	}
 	askGemini(config, args[0], string(text))
 }
