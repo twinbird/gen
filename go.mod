@@ -1,4 +1,4 @@
-module github.com/twinbird/ased
+module github.com/twinbird/gen
 
 go 1.19
 
@@ -8,6 +8,7 @@ require (
 	cloud.google.com/go/compute v1.23.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/longrunning v0.5.2 // indirect
+	github.com/adrg/xdg v0.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/generative-ai-go v0.10.0 // indirect

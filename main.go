@@ -2,13 +2,21 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/adrg/xdg"
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+)
+
+const (
+	CONFIG_DIR_NAME = "gen"
+	CONFIG_FILE_NAME = "setting.json"
 )
 
 func usage() {
@@ -23,7 +31,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Println("ased version 0.0.1")
+		fmt.Println("ged version 0.0.1")
 		return
 	}
 
@@ -33,18 +41,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	config, err := getConfig()
+	if err != nil {
+		log.Fatal("config file load error", err)
+	}
+
 	text, err := ioutil.ReadFile(args[1])
 	if err != nil {
 		log.Fatal("file read error", err)
 	}
-	withGemini(args[0], string(text))
+	askGemini(config, args[0], string(text))
 }
 
-func withGemini(script string, text string) {
+func askGemini(config *Config, script string, text string) {
 	s := script + "\n" + text
 
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("API_KEY")))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(config.Gemini.GeminiApiKey))
 	if err != nil {
 		log.Fatal("gemini client error", err)
 	}
@@ -66,4 +79,30 @@ func printGeminiResponse(resp *genai.GenerateContentResponse) {
 			}
 		}
 	}
+}
+
+type GeminiConfig struct {
+	GeminiApiKey string
+}
+
+type Config struct {
+	Gemini GeminiConfig
+}
+
+func getConfig() (*Config, error) {
+	path := getConfigPath()
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Config{}
+	if err := json.Unmarshal(b, config); err != nil {
+		return nil, err
+	}
+	return config, nil
+}
+
+func getConfigPath() string {
+	return filepath.Join(xdg.ConfigHome, CONFIG_DIR_NAME, CONFIG_FILE_NAME)
 }
