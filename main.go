@@ -46,9 +46,13 @@ func main() {
 		log.Fatal("config file load error", err)
 	}
 
-	text, err := ioutil.ReadFile(args[1])
-	if err != nil {
-		log.Fatal("file read error", err)
+	text := ""
+	if len(args) > 1 {
+		b, err := ioutil.ReadFile(args[1])
+		if err != nil {
+			log.Fatal("file read error", err)
+		}
+		text = string(b)
 	}
 	askGemini(config, args[0], string(text))
 }
