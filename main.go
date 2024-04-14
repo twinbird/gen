@@ -29,11 +29,20 @@ func usage() {
 func main() {
 	flag.Usage = usage
 	version := flag.Bool("version", false, "display version information")
+	doConfigure := flag.Bool("configure", false, "output configuration file")
 
 	flag.Parse()
 
 	if *version {
-		fmt.Println("ged version 0.0.1")
+		fmt.Println("gen version 0.0.1")
+		return
+	}
+
+	if *doConfigure {
+		if fileExists(getConfigPath()) {
+			return
+		}
+		outputConfigurationFile()
 		return
 	}
 
@@ -45,7 +54,8 @@ func main() {
 
 	config, err := getConfig()
 	if err != nil {
-		log.Fatal("config file load error", err)
+		fmt.Fprintf(os.Stderr, "Configuration file load error.\nSee %s\nOr do `gen -configure`\n", getConfigPath())
+		return
 	}
 
 	text := ""
@@ -61,7 +71,7 @@ func main() {
 		text = scanner.Text()
 	}
 
-	if config.DefaultService == "chatgpt" {
+	if config.DefaultUseService == "chatgpt" {
 		askChatGpt(config, args[0], string(text))
 	} else {
 		askGemini(config, args[0], string(text))
@@ -133,9 +143,9 @@ type ChatGptConfig struct {
 }
 
 type Config struct {
-	DefaultService string
-	Gemini         GeminiConfig
-	ChatGpt        ChatGptConfig
+	DefaultUseService string
+	Gemini            GeminiConfig
+	ChatGpt           ChatGptConfig
 }
 
 func getConfig() (*Config, error) {
@@ -152,6 +162,33 @@ func getConfig() (*Config, error) {
 	return config, nil
 }
 
+func getConfigDir() string {
+	return filepath.Join(xdg.ConfigHome, CONFIG_DIR_NAME)
+}
+
 func getConfigPath() string {
-	return filepath.Join(xdg.ConfigHome, CONFIG_DIR_NAME, CONFIG_FILE_NAME)
+	return filepath.Join(getConfigDir(), CONFIG_FILE_NAME)
+}
+
+func outputConfigurationFile() {
+	dir := getConfigDir()
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		log.Fatal(err)
+	}
+
+	config := &Config{}
+	b, err := json.MarshalIndent(config, "", "\t")
+	if err != nil {
+		log.Fatal("config file marshal error")
+	}
+	err = ioutil.WriteFile(getConfigPath(), b, os.ModePerm)
+	if err != nil {
+		log.Fatal("config file write error")
+	}
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
 }
