@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/adrg/xdg"
 	"github.com/google/generative-ai-go/genai"
+	openai "github.com/sashabaranov/go-openai"
 	"google.golang.org/api/option"
 	"io/ioutil"
 	"log"
@@ -59,11 +60,40 @@ func main() {
 		scanner.Scan()
 		text = scanner.Text()
 	}
-	askGemini(config, args[0], string(text))
+
+	if config.DefaultService == "chatgpt" {
+		askChatGpt(config, args[0], string(text))
+	} else {
+		askGemini(config, args[0], string(text))
+	}
+}
+
+func askChatGpt(config *Config, script string, text string) {
+	s := createScript(config, script, text)
+	client := openai.NewClient(config.ChatGpt.ApiKey)
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			Model: openai.GPT3Dot5Turbo,
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: s,
+				},
+			},
+		},
+	)
+
+	if err != nil {
+		fmt.Printf("ChatCompletion error: %v\n", err)
+		return
+	}
+
+	fmt.Println(resp.Choices[0].Message.Content)
 }
 
 func askGemini(config *Config, script string, text string) {
-	s := script + "\n" + text
+	s := createScript(config, script, text)
 
 	ctx := context.Background()
 	client, err := genai.NewClient(ctx, option.WithAPIKey(config.Gemini.ApiKey))
@@ -90,6 +120,10 @@ func printGeminiResponse(resp *genai.GenerateContentResponse) {
 	}
 }
 
+func createScript(config *Config, script string, fileText string) string {
+	return script + "\n" + fileText
+}
+
 type GeminiConfig struct {
 	ApiKey string
 }
@@ -99,8 +133,9 @@ type ChatGptConfig struct {
 }
 
 type Config struct {
-	Gemini  GeminiConfig
-	ChatGpt ChatGptConfig
+	DefaultService string
+	Gemini         GeminiConfig
+	ChatGpt        ChatGptConfig
 }
 
 func getConfig() (*Config, error) {
