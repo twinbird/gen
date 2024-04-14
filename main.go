@@ -66,7 +66,7 @@ func askGemini(config *Config, script string, text string) {
 	s := script + "\n" + text
 
 	ctx := context.Background()
-	client, err := genai.NewClient(ctx, option.WithAPIKey(config.Gemini.GeminiApiKey))
+	client, err := genai.NewClient(ctx, option.WithAPIKey(config.Gemini.ApiKey))
 	if err != nil {
 		log.Fatal("gemini client error", err)
 	}
@@ -91,11 +91,16 @@ func printGeminiResponse(resp *genai.GenerateContentResponse) {
 }
 
 type GeminiConfig struct {
-	GeminiApiKey string
+	ApiKey string
+}
+
+type ChatGptConfig struct {
+	ApiKey string
 }
 
 type Config struct {
-	Gemini GeminiConfig
+	Gemini  GeminiConfig
+	ChatGpt ChatGptConfig
 }
 
 func getConfig() (*Config, error) {
