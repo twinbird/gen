@@ -1,8 +1,4 @@
-PROGRAM = gen
-
-all:	$(PROGRAM)
-
-$(PROGRAM):
+gen:
 	CGO_ENABLED=0 go build
 
 clean:

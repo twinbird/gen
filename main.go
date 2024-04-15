@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 )
 
 const (
@@ -78,6 +79,15 @@ func main() {
 	}
 }
 
+func stripCodeBlock(str string) string {
+	head := regexp.MustCompile("^```.*\n")
+	str = head.ReplaceAllString(str, "")
+
+	tail := regexp.MustCompile("```$")
+	str = tail.ReplaceAllString(str, "")
+	return str
+}
+
 func askChatGpt(config *Config, script string, text string) {
 	s := createScript(config, script, text)
 	client := openai.NewClient(config.ChatGpt.ApiKey)
@@ -99,7 +109,8 @@ func askChatGpt(config *Config, script string, text string) {
 		return
 	}
 
-	fmt.Println(resp.Choices[0].Message.Content)
+	res := stripCodeBlock(resp.Choices[0].Message.Content)
+	fmt.Println(res)
 }
 
 func askGemini(config *Config, script string, text string) {
@@ -117,6 +128,7 @@ func askGemini(config *Config, script string, text string) {
 	if err != nil {
 		log.Fatal("gemini generateContent error", err)
 	}
+
 	printGeminiResponse(resp)
 }
 
