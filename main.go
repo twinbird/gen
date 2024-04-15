@@ -91,17 +91,28 @@ func stripCodeBlock(str string) string {
 func askChatGpt(config *Config, script string, text string) {
 	s := createScript(config, script, text)
 	client := openai.NewClient(config.ChatGpt.ApiKey)
-	resp, err := client.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: s,
-				},
+
+	req := openai.ChatCompletionRequest{
+		Model: openai.GPT3Dot5Turbo,
+		Messages: []openai.ChatCompletionMessage{
+			{
+				Role:    openai.ChatMessageRoleSystem,
+				Content: config.ChatGpt.SystemRolePrompt,
 			},
 		},
+	}
+
+	req.Messages = append(
+		req.Messages,
+		openai.ChatCompletionMessage{
+			Role:    openai.ChatMessageRoleUser,
+			Content: s,
+		},
+	)
+
+	resp, err := client.CreateChatCompletion(
+		context.Background(),
+		req,
 	)
 
 	if err != nil {
@@ -151,7 +162,8 @@ type GeminiConfig struct {
 }
 
 type ChatGptConfig struct {
-	ApiKey string
+	ApiKey           string
+	SystemRolePrompt string
 }
 
 type Config struct {
