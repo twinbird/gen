@@ -1,4 +1,4 @@
-gen:
+gen: main.go
 	CGO_ENABLED=0 go build
 
 clean:
